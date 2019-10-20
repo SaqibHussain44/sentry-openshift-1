@@ -1,0 +1,52 @@
+kind: DeploymentConfig
+apiVersion: v1
+metadata:
+  labels:
+    run: redis
+  name: redis
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        run: redis
+    spec:
+      volumes:
+      - name: redis-data
+        emptyDir: {}
+      containers:
+      - image: redis:alpine
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          initialDelaySeconds: 5
+          tcpSocket:
+            port: 6379
+          timeoutSeconds: 1
+        readinessProbe:
+          initialDelaySeconds: 5
+          tcpSocket:
+            port: 6379
+          timeoutSeconds: 1
+        volumeMounts:
+          - name: redis-data
+            mountPath: /data/
+        name: redis
+        ports:
+        - containerPort: 6379
+          protocol: TCP
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+---
+kind: Service
+apiVersion: v1
+metadata:
+  labels:
+    run: redis
+  name: redis
+spec:
+  ports:
+  - port: 6379
+    protocol: TCP
+    targetPort: 6379
+  selector:
+    run: redis
